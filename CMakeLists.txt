@@ -17,10 +17,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(xtl REQUIRED)
 find_package(xsimd REQUIRED)
 find_package(xtensor REQUIRED)
+find_package(spdlog REQUIRED)
 
 include_directories(${xtl_INCLUDE_DIRS}) 
 include_directories(${xsimd_INCLUDE_DIRS}) 
 include_directories(${xtensor_INCLUDE_DIRS}) 
+include_directories(${spdlog_INCLUDE_DIRS})
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -94,6 +96,8 @@ target_link_libraries(${PROJECT_NAME}_app
     xtl
     xsimd
     xtensor
+    Threads::Threads
+    fmt::fmt
 )
 
 if(BLAS_FOUND)
@@ -133,6 +137,7 @@ if(BUILD_TESTS)
         xsimd
         xtensor
         Threads::Threads
+        fmt::fmt
     )
 
     # 可选：在 macOS 上为需要 BLAS 的测试添加 Accelerate，非 macOS 可选链接 BLAS
