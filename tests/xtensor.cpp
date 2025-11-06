@@ -19,8 +19,7 @@ int main() {
     
     LOG_INFO("========================================");
     LOG_INFO("xtensor + Accelerate Framework Test");
-    LOG_INFO("Date: 2025-11-06 09:06:07 UTC");
-    LOG_INFO("User: M4yGem1ni");
+    LOG_INFO("Date: {} {}", __DATE__, __TIME__);
     LOG_INFO("========================================");
     
     // Test 1: 基本矩阵乘法
