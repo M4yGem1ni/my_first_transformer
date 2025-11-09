@@ -1,6 +1,6 @@
 // tests/encoder_decoder.cpp
-#include "core/encoder_decoder.hpp"
-#include "utils/logger.hpp"  // 🔴 添加 logger
+#include "transformer.hpp"  // 🔴 只需要包含这一个头文件
+#include "utils/logger.hpp"
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/io/xio.hpp>
 #include <xtensor/generators/xbuilder.hpp>
@@ -15,7 +15,6 @@ using namespace transformer;
 // 辅助函数
 // ============================================
 
-// 创建因果mask（下三角矩阵）
 template<typename T = float>
 xarray<T> create_causal_mask(size_t size) {
     std::vector<size_t> shape = {1, size, size};
@@ -31,7 +30,6 @@ xarray<T> create_causal_mask(size_t size) {
     return mask;
 }
 
-// 创建 padding mask
 template<typename T = float>
 xarray<T> create_padding_mask(size_t batch_size, size_t seq_len) {
     std::vector<size_t> shape = {batch_size, seq_len, seq_len};
@@ -41,11 +39,8 @@ xarray<T> create_padding_mask(size_t batch_size, size_t seq_len) {
     return mask;
 }
 
-// ============================================
-// 工厂函数：创建完整的 Transformer 模型
-// ============================================
 template<typename T = float>
-std::shared_ptr<EncoderDecoder<T>> make_model(
+std::shared_ptr<models::EncoderDecoder<T>> make_model(
     size_t src_vocab,
     size_t tgt_vocab,
     size_t d_model = 512,
@@ -71,7 +66,7 @@ std::shared_ptr<EncoderDecoder<T>> make_model(
     auto generator = std::make_shared<Generator>(d_model, tgt_vocab);
     LOG_INFO("  ✓ Generator created");
     
-    auto model = std::make_shared<EncoderDecoder<T>>(
+    auto model = std::make_shared<models::EncoderDecoder<T>>(
         encoder, decoder, src_embed, tgt_embed, generator
     );
     LOG_INFO("  ✓ Model assembled");
@@ -79,9 +74,6 @@ std::shared_ptr<EncoderDecoder<T>> make_model(
     return model;
 }
 
-// ============================================
-// 辅助函数：打印数组信息
-// ============================================
 template<typename T>
 std::string shape_to_string(const xarray<T>& arr) {
     std::string result = "[";
@@ -98,29 +90,23 @@ std::string shape_to_string(const xarray<T>& arr) {
 // ============================================
 int main() {
     try {
-        // 🔴 初始化 Logger
+        // 初始化 Logger
         Logger::instance().init(
-            "transformer_test",       // logger 名称
-            true,                      // 控制台输出
-            "logs/transformer_test.log",  // 日志文件
-            1024 * 1024 * 10,         // 10MB
-            3                          // 保留3个文件
+            "transformer_test",
+            true,
+            "logs/transformer_test.log",
+            1024 * 1024 * 10,
+            3
         );
         
-        // 🔴 设置日志级别
-        // Logger::instance().set_level(Logger::Level::TRACE);  // 超详细（调试用）
-        // Logger::instance().set_level(Logger::Level::DEBUG);  // 详细
-        Logger::instance().set_level(Logger::Level::INFO);    // 正常（推荐）
-        // Logger::instance().set_level(Logger::Level::WARN);   // 只显示警告
+        Logger::instance().set_level(Logger::Level::INFO);
         
         LOG_INFO("=== Transformer Encoder-Decoder Test ===");
-        LOG_INFO("Current Date and Time (UTC): 2025-01-09 11:55:42");
+        LOG_INFO("Current Date and Time (UTC): 2025-11-09 12:30:57");
         LOG_INFO("Current User's Login: M4yGem1ni");
-        LOG_INFO("");  // 空行
+        LOG_INFO("");
         
-        // ============================================
         // 模型参数
-        // ============================================
         const size_t src_vocab_size = 1000;
         const size_t tgt_vocab_size = 1000;
         const size_t d_model = 512;
@@ -129,35 +115,17 @@ int main() {
         const size_t d_ff = 2048;
         const float dropout = 0.1f;
         
-        LOG_DEBUG("Model hyperparameters:");
-        LOG_DEBUG("  src_vocab_size: {}", src_vocab_size);
-        LOG_DEBUG("  tgt_vocab_size: {}", tgt_vocab_size);
-        LOG_DEBUG("  d_model: {}", d_model);
-        LOG_DEBUG("  num_heads: {}", num_heads);
-        LOG_DEBUG("  num_layers: {}", num_layers);
-        LOG_DEBUG("  d_ff: {}", d_ff);
-        LOG_DEBUG("  dropout: {:.2f}", dropout);
-        
-        // ============================================
         // 创建模型
-        // ============================================
         auto model = make_model<float>(
-            src_vocab_size,
-            tgt_vocab_size,
-            d_model,
-            num_heads,
-            num_layers,
-            d_ff,
-            dropout
+            src_vocab_size, tgt_vocab_size, d_model,
+            num_heads, num_layers, d_ff, dropout
         );
         
         LOG_INFO("");
         LOG_INFO("✓ Model created successfully!");
         LOG_INFO("");
         
-        // ============================================
         // 准备测试数据
-        // ============================================
         const size_t batch_size = 1;
         const size_t src_seq_len = 5;
         const size_t tgt_seq_len = 4;
@@ -170,7 +138,6 @@ int main() {
         xarray<int> src = zeros<int>(src_shape);
         xarray<int> tgt = zeros<int>(tgt_shape);
         
-        // 填充测试数据
         for (size_t i = 0; i < src_seq_len; ++i) {
             src.data()[i] = static_cast<int>(i + 1);
         }
@@ -181,18 +148,7 @@ int main() {
         LOG_INFO("  src: [{}, {}]", batch_size, src_seq_len);
         LOG_INFO("  tgt: [{}, {}]", batch_size, tgt_seq_len);
         
-        // 只在 DEBUG 级别打印具体的 token
-        if (Logger::instance().get_level() <= Logger::Level::DEBUG) {
-            std::stringstream ss_src, ss_tgt;
-            ss_src << src;
-            ss_tgt << tgt;
-            LOG_DEBUG("  src tokens: {}", ss_src.str());
-            LOG_DEBUG("  tgt tokens: {}", ss_tgt.str());
-        }
-        
-        // ============================================
         // 创建 Masks
-        // ============================================
         LOG_INFO("");
         LOG_INFO("=== Creating Masks ===");
         
@@ -202,34 +158,19 @@ int main() {
         auto tgt_mask = create_causal_mask<float>(tgt_seq_len);
         LOG_INFO("  tgt_mask: {}", shape_to_string(tgt_mask));
         
-        // 只在 DEBUG 级别打印 mask 内容
-        if (Logger::instance().get_level() <= Logger::Level::DEBUG) {
-            std::stringstream ss_mask;
-            ss_mask << tgt_mask;
-            LOG_DEBUG("  tgt_mask content (causal):\n{}", ss_mask.str());
-        }
-        
-        // ============================================
         // 前向传播
-        // ============================================
         LOG_INFO("");
         LOG_INFO("=== Running Forward Pass ===");
         
-        // 🔴 使用日志计时宏
         LOG_TIME_START(forward_pass);
-        
         auto output = model->forward(src, tgt, src_mask, tgt_mask);
-        
         LOG_TIME_END(forward_pass);
         
-        // ============================================
         // 输出结果
-        // ============================================
         LOG_INFO("");
         LOG_INFO("=== Forward Pass Complete ===");
         LOG_INFO("Output shape: {}", shape_to_string(output));
         
-        // 计算统计信息
         auto output_min = xt::amin(output)();
         auto output_max = xt::amax(output)();
         auto output_mean = xt::mean(output)();
@@ -239,7 +180,7 @@ int main() {
         LOG_INFO("  max:  {:.6f}", output_max);
         LOG_INFO("  mean: {:.6f}", output_mean);
         
-        // 检查输出是否有效
+        // 检查输出有效性
         if (std::isnan(output_min) || std::isnan(output_max) || std::isnan(output_mean)) {
             LOG_ERROR("Output contains NaN values!");
             LOG_ERROR("❌ Test FAILED!");
@@ -254,16 +195,11 @@ int main() {
             return 1;
         }
         
-        // ============================================
-        // 测试成功
-        // ============================================
         LOG_INFO("");
         LOG_INFO("✅ Test completed successfully!");
         LOG_INFO("🎉 Transformer model works correctly!");
         
-        // 关闭日志系统
         Logger::instance().shutdown();
-        
         return 0;
         
     } catch (const std::exception& e) {

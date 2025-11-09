@@ -1,7 +1,7 @@
 // include/core/encoder_decoder.hpp
 #pragma once
 
-#include "xtensor_accelerate.hpp"
+#include "solvers/accelerate.hpp"
 #include "utils/logger.hpp" 
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/views/xview.hpp>
