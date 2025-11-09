@@ -7,7 +7,8 @@ MacOS 13+
 ```shell
 brew install xtl
 brew install xsensor
-brew install xshmid
+brew install xsmid
 brew install sqlitecpp
+brew install fmt
 brew install spdlog
 ```
