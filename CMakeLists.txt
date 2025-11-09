@@ -125,7 +125,7 @@ if(BUILD_TESTS)
 
   foreach(_test_src IN LISTS TEST_SOURCES)
     get_filename_component(_test_name ${_test_src} NAME_WE)
-    set(_exe_name ${PROJECT_NAME}_test_${_test_name})
+    set(_exe_name test_${_test_name})
 
     add_executable(${_exe_name} ${_test_src})
 

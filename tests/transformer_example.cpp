@@ -1,6 +1,8 @@
 // tests/encoder_decoder.cpp
 #include "transformer.hpp"  // 🔴 只需要包含这一个头文件
 #include "utils/logger.hpp"
+#include "utils/progress_bar.hpp"
+#include "utils/metrics.hpp"
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/io/xio.hpp>
 #include <xtensor/generators/xbuilder.hpp>
@@ -10,6 +12,7 @@
 
 using namespace xt;
 using namespace transformer;
+using namespace transformer::utils;
 
 // ============================================
 // 辅助函数
@@ -161,10 +164,20 @@ int main() {
         // 前向传播
         LOG_INFO("");
         LOG_INFO("=== Running Forward Pass ===");
+
+        const size_t num_iterations = 10;
+        ProgressBar progress(num_iterations, "Forward Pass");
         
-        LOG_TIME_START(forward_pass);
-        auto output = model->forward(src, tgt, src_mask, tgt_mask);
-        LOG_TIME_END(forward_pass);
+        xarray<float> output;
+        
+        for (size_t i = 0; i < num_iterations; ++i) {
+            LOG_TIME_START(forward_pass);
+            output = model->forward(src, tgt, src_mask, tgt_mask);
+            LOG_TIME_END(forward_pass);
+            progress.update(i + 1);
+        }
+        
+        // auto output = model->forward(src, tgt, src_mask, tgt_mask);
         
         // 输出结果
         LOG_INFO("");

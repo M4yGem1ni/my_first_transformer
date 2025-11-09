@@ -290,3 +290,32 @@ private:
             __end_##name - __timer_##name); \
         LOG_INFO("{} took {} ms", #name, __duration_##name.count()); \
     } while(0)
+
+// ============================================
+// 进度条相关宏
+// ============================================
+
+/**
+ * @brief 创建进度条
+ * @param total 总步数
+ * @param desc 描述
+ * 
+ * 用法：
+ * CREATE_PROGRESS_BAR(100, "Training");
+ * for (int i = 0; i < 100; ++i) {
+ *     // work
+ *     UPDATE_PROGRESS_BAR(i + 1);
+ * }
+ * FINISH_PROGRESS_BAR();
+ */
+#define CREATE_PROGRESS_BAR(total, desc) \
+    transformer::utils::ProgressBar __progress_bar((total), (desc))
+
+#define UPDATE_PROGRESS_BAR(current) \
+    __progress_bar.update(current)
+
+#define SET_PROGRESS_POSTFIX(postfix) \
+    __progress_bar.set_postfix(postfix)
+
+#define FINISH_PROGRESS_BAR() \
+    __progress_bar.finish()
