@@ -28,6 +28,45 @@ namespace accelerate {
  */
 class Backend {
 public:
+    /**
+     * @brief 批量 Embedding 查找（优化版）
+     * @param indices 索引数组 [batch, seq_len]
+     * @param embedding_table 嵌入表 [vocab_size, d_model]
+     * @return 嵌入向量 [batch, seq_len, d_model]
+     */
+    static xarray<float> embedding_lookup(
+        const xarray<int>& indices,
+        const xarray<float>& embedding_table)
+    {
+        size_t batch = indices.shape()[0];
+        size_t seq_len = indices.shape()[1];
+        size_t d_model = embedding_table.shape()[1];
+        
+        xarray<float> output = zeros<float>({batch, seq_len, d_model});
+        
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        
+        // 使用 BLAS copy 加速
+        for (size_t b = 0; b < batch; ++b) {
+            for (size_t s = 0; s < seq_len; ++s) {
+                int idx = indices(b, s);
+                if (idx >= 0 && idx < static_cast<int>(embedding_table.shape()[0])) {
+                    cblas_scopy(
+                        static_cast<int>(d_model),
+                        embedding_table.data() + idx * d_model,
+                        1,
+                        output.data() + (b * seq_len + s) * d_model,
+                        1
+                    );
+                }
+            }
+        }
+        
+        #pragma clang diagnostic pop
+        
+        return output;
+    }
     // ============================================
     // 2D 矩阵乘法 - 单精度
     // ============================================

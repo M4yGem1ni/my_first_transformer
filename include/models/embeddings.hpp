@@ -3,6 +3,7 @@
 
 #include "utils/logger.hpp"
 #include "utils/weight_init.hpp"
+#include "solvers/accelerate.hpp"
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/generators/xbuilder.hpp>
 #include <xtensor/views/xview.hpp>
@@ -39,21 +40,7 @@ public:
      */
     template<typename T = float>
     xarray<T> forward(const xarray<int>& x) {
-        size_t batch = x.shape()[0];
-        size_t seq_len = x.shape()[1];
-        
-        xarray<T> output = zeros<T>({batch, seq_len, d_model_});
-        
-        for (size_t b = 0; b < batch; ++b) {
-            for (size_t s = 0; s < seq_len; ++s) {
-                int idx = x(b, s);
-                if (idx >= 0 && idx < static_cast<int>(vocab_size_)) {
-                    view(output, b, s, all()) = view(embedding_table_, idx, all());
-                }
-            }
-        }
-        
-        return output;
+        return accelerate::Backend::embedding_lookup(x, embedding_table_);
     }
 
 private:
